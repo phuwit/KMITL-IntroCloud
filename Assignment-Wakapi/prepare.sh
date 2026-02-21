@@ -3,7 +3,7 @@
 
 # update and upgrade
 apt-get update
-apt-get upgrade -y
+# apt-get upgrade -y
 
 
 # install docker
