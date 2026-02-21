@@ -6,24 +6,24 @@ services:
     restart: unless-stopped
     volumes:
       - ./wakapi-data:/data
-    secrets:
-      - source: password_salt
-        target: password_salt
-        uid: '1000'
-        gid: '1000'
-        mode: '0400'
+    # secrets:
+    #   - source: password_salt
+    #     target: password_salt
+    #     uid: '1000'
+    #     gid: '1000'
+    #     mode: '0400'
 
-      - source: smtp_pass
-        target: smtp_pass
-        uid: '1000'
-        gid: '1000'
-        mode: '0400'
+    #   - source: smtp_pass
+    #     target: smtp_pass
+    #     uid: '1000'
+    #     gid: '1000'
+    #     mode: '0400'
 
-      - source: db_password
-        target: db_password
-        uid: '1000'
-        gid: '1000'
-        mode: '0400'
+    #   - source: db_password
+    #     target: db_password
+    #     uid: '1000'
+    #     gid: '1000'
+    #     mode: '0400'
     # environment:
     #   # See README.md and config.default.yml for all config options
     #   WAKAPI_DB_TYPE: "postgres"

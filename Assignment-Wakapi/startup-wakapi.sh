@@ -12,6 +12,8 @@ export WAKAPI_PASSWORD_SALT="$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | 
 
 
 apt-get install -y git
-git clone "https://github.com/phuwit/KMITL-IntroCloud" ~/IntroCloud
-cd ~/IntroCloud/Assignment-Wakapi
+mkdir -p /app
+git clone "https://github.com/phuwit/KMITL-IntroCloud" /app/IntroCloud
+cd /app/IntroCloud/Assignment-Wakapi
+
 sh prepare.sh
