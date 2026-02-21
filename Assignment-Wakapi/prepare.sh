@@ -28,5 +28,13 @@ apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 
+echo "$WAKAPI_DB_TYPE"
+echo "$WAKAPI_DB_NAME"
+echo "$WAKAPI_DB_USER"
+echo "$WAKAPI_DB_HOST"
+echo "$WAKAPI_DB_PORT"
+echo "$WAKAPI_DB_PASSWORD"
+echo "$WAKAPI_PASSWORD_SALT"
+
 # run compose
 docker compose up -d
