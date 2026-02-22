@@ -1,0 +1,61 @@
+gcloud compute instances create web1 \
+    --zone=europe-west1-d \
+    --tags=network-lb-tag \
+    --machine-type=e2-small \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --metadata=startup-script='#!/bin/bash
+apt-get update
+apt-get install apache2 -y
+service apache2 restart
+echo "<h3>Web Server: web1</h3>" | tee /var/www/html/index.html'
+
+gcloud compute instances create web2 \
+    --zone=europe-west1-d \
+    --tags=network-lb-tag \
+    --machine-type=e2-small \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --metadata=startup-script='#!/bin/bash
+apt-get update
+apt-get install apache2 -y
+service apache2 restart
+echo "<h3>Web Server: web2</h3>" | tee /var/www/html/index.html'
+
+gcloud compute instances create web3 \
+    --zone=europe-west1-d \
+    --tags=network-lb-tag \
+    --machine-type=e2-small \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --metadata=startup-script='#!/bin/bash
+apt-get update
+apt-get install apache2 -y
+service apache2 restart
+echo "<h3>Web Server: web3</h3>" | tee /var/www/html/index.html'
+
+gcloud compute firewall-rules create www-firewall-network-lb \
+    --target-tags network-lb-tag --allow tcp:80
+
+# target-pool load balancer
+gcloud compute addresses create network-lb-ip-1 \
+    --region europe-west1
+
+gcloud compute http-health-checks create basic-check
+
+gcloud compute target-pools create www-pool \
+    --region europe-west1 --http-health-check basic-check
+
+gcloud compute target-pools add-instances www-pool \
+    --instances web1,web2,web3 \
+    --instances-zone europe-west1-d
+
+gcloud compute forwarding-rules create www-rule \
+    --region europe-west1 \
+    --ports 80 \
+    --address network-lb-ip-1 \
+    --target-pool www-pool
+
+gcloud compute forwarding-rules describe www-rule --region europe-west1
+
+
