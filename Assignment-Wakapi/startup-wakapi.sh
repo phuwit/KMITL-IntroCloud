@@ -71,13 +71,13 @@ secrets:
 EOF
 
 # export variables
-export WAKAPI_DB_TYPE=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_TYPE -H "Metadata-Flavor: Google")
-export WAKAPI_DB_NAME=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_NAME -H "Metadata-Flavor: Google")
-export WAKAPI_DB_USER=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_USER -H "Metadata-Flavor: Google")
-export WAKAPI_DB_HOST=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_HOST -H "Metadata-Flavor: Google")
-export WAKAPI_DB_PORT=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_PORT -H "Metadata-Flavor: Google")
+export WAKAPI_DB_TYPE="$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_TYPE -H "Metadata-Flavor: Google")"
+export WAKAPI_DB_NAME="$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_NAME -H "Metadata-Flavor: Google")"
+export WAKAPI_DB_USER="$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_USER -H "Metadata-Flavor: Google")"
+export WAKAPI_DB_HOST="$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_HOST -H "Metadata-Flavor: Google")"
+export WAKAPI_DB_PORT="$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_PORT -H "Metadata-Flavor: Google")"
 export WAKAPI_DB_PASSWORD="$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_DB_PASSWORD -H "Metadata-Flavor: Google")"
-export WAKAPI_PASSWORD_SALT="$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w ${1:-32} | head -n 1)"
+export WAKAPI_PASSWORD_SALT="$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/WAKAPI_PASSWORD_SALT -H "Metadata-Flavor: Google")"
 
 # run compose
 docker compose --file "$APP_DIRECTORY/compose.yml" up --detach
