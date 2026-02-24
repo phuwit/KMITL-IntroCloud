@@ -1,6 +1,19 @@
-resource "google_service_account" "compute_script_access" {
-  account_id   = "compute-script-access"
-  display_name = "Compute Script Access"
+resource "google_service_account" "wakapi_instances" {
+  account_id   = "wakapi-instances"
+  display_name = "Wakapi Instances"
+}
+
+resource "google_project_iam_member" "monitoring_metricwriter" {
+  project = var.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = google_service_account.wakapi_instances.member
+}
+
+
+resource "google_project_iam_member" "logging_logwriter" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = google_service_account.wakapi_instances.member
 }
 
 resource "google_storage_bucket" "scripts" {
@@ -11,13 +24,10 @@ resource "google_storage_bucket" "scripts" {
   uniform_bucket_level_access = true
 }
 
-resource "google_storage_bucket_iam_binding" "compute_script_access" {
+resource "google_storage_bucket_iam_member" "scripts_access" {
   bucket = google_storage_bucket.scripts.name
   role   = "roles/storage.objectViewer"
-
-  members = [
-    google_service_account.compute_script_access.member,
-  ]
+  member = google_service_account.wakapi_instances.member
 }
 
 resource "google_storage_bucket_object" "startup_wakapi" {
@@ -51,7 +61,7 @@ resource "google_compute_instance_template" "wakapi_template" {
   }
 
   service_account {
-    email = google_service_account.compute_script_access.email
+    email = google_service_account.wakapi_instances.email
     scopes = ["compute-ro",
       "logging-write",
       "monitoring-write",
@@ -68,6 +78,10 @@ resource "google_compute_instance_template" "wakapi_template" {
     WAKAPI_DB_PASSWORD   = random_password.WAKAPI_DB_PASSWORD.result
     WAKAPI_PASSWORD_SALT = random_password.WAKAPI_PASSWORD_SALT.result
     WAKAPI_DB_HOST       = google_compute_address.managed_db.address
+  }
+
+  lifecycle {
+    replace_triggered_by = [google_storage_bucket_object.startup_wakapi]
   }
 }
 
@@ -138,7 +152,7 @@ resource "google_compute_region_autoscaler" "wakapi_autoscaler" {
   autoscaling_policy {
     max_replicas    = 2
     min_replicas    = 1
-    cooldown_period = 60
+    cooldown_period = 3 * 60
 
     cpu_utilization {
       target = 0.95
@@ -146,6 +160,10 @@ resource "google_compute_region_autoscaler" "wakapi_autoscaler" {
   }
 
   depends_on = [google_compute_region_instance_group_manager.wakapi_mig]
+
+  lifecycle {
+    replace_triggered_by = [google_compute_region_instance_group_manager.wakapi_mig]
+  }
 }
 
 resource "google_compute_region_instance_group_manager" "wakapi_mig" {

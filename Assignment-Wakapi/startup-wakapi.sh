@@ -8,7 +8,7 @@ mkdir -p "$APP_DIRECTORY"
 
 # update and upgrade
 apt-get update
-# apt-get upgrade -y
+apt-get upgrade -y
 
 # install docker
 # Add Docker's official GPG key:
@@ -81,3 +81,7 @@ export WAKAPI_PASSWORD_SALT="$(curl http://metadata.google.internal/computeMetad
 
 # run compose
 docker compose --file "$APP_DIRECTORY/compose.yml" up --detach
+
+# install guest agent
+curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+bash add-google-cloud-ops-agent-repo.sh --also-install

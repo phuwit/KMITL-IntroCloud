@@ -9,17 +9,17 @@ resource "google_monitoring_notification_channel" "notification_email" {
 }
 
 resource "google_monitoring_alert_policy" "wakapi_cpu_alert" {
-  display_name = "Wakapi Instances CPU Utilization > ${var.alert_cpu_usage_percent_fraction_gt}"
+  display_name = "Wakapi Instances CPU Load (1m) > ${var.alert_cpu_usage_percent_fraction_gt}"
   documentation {
-    content = "The $${metric.display_name} of the $${resource.type} $${resource.label.instance_id} in $${resource.project} has exceeded ${var.alert_cpu_usage_percent_fraction_gt} for over 1 minute."
+    content = "The $${metric.display_name} of the $${resource.type} in $${resource.project} has exceeded ${var.alert_cpu_usage_percent_fraction_gt} for over 1 minute."
   }
   combiner = "OR"
   conditions {
-    display_name = "Condition 1"
+    display_name = "CPU Load (1m)"
     condition_threshold {
       comparison      = "COMPARISON_GT"
       duration        = "60s"
-      filter          = "resource.type = \"gce_instance\" AND metric.type = \"compute.googleapis.com/instance/cpu/utilization\" AND metric.labels.instance_name = starts_with(\"wakapi\")"
+      filter          = "resource.type = \"gce_instance\" AND metric.type = \"agent.googleapis.com/cpu/load_1m\""
       threshold_value = var.alert_cpu_usage_percent_fraction_gt
       aggregations {
         alignment_period     = "60s"
