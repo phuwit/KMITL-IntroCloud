@@ -1,11 +1,5 @@
 # managed sql
 
-resource "google_service_networking_connection" "wakapi_db_vpc_connection" {
-  network                 = google_compute_network.wakapi_net.id
-  service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.wakapi_db_ip.name]
-}
-
 resource "google_sql_database_instance" "wakapi_db" {
   name                = "wakapi-db"
   region              = var.region
@@ -13,17 +7,17 @@ resource "google_sql_database_instance" "wakapi_db" {
   root_password       = random_password.WAKAPI_DB_ROOT_PASSWORD.result
   deletion_protection = false
 
-  depends_on = [google_service_networking_connection.wakapi_db_vpc_connection]
-
   settings {
     tier              = var.database_instance_tier
     edition           = "ENTERPRISE"
     availability_type = "ZONAL"
     disk_size         = 10
     ip_configuration {
-      ipv4_enabled                                  = false
-      private_network                               = google_compute_network.wakapi_net.self_link
-      enable_private_path_for_google_cloud_services = true
+      psc_config {
+        psc_enabled               = true
+        allowed_consumer_projects = [var.project_id]
+      }
+      ipv4_enabled = false
     }
   }
 }

@@ -1,0 +1,1 @@
+curl -L -o mprime.tgz 'https://download.mersenne.ca/gimps/v30/30.19/p95v3019b20.linux64.tar.gz' && mkdir -p 'mprime' && tar xzf mprime.tgz -C mprime &&  ./mprime/mprime

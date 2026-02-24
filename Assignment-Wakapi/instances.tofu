@@ -33,10 +33,10 @@ resource "google_compute_instance_template" "wakapi_template" {
   name         = "wakapi-template"
   machine_type = var.instance_type
   tags = setunion(
-    google_compute_firewall.allow_ssh.target_tags,
-    google_compute_firewall.allow_http_from_proxy.target_tags,
-    google_compute_firewall.allow_health_checks.target_tags,
-    google_compute_firewall.allow_internal_icmp.target_tags
+    google_compute_firewall.managed_allow_internet_ssh.target_tags,
+    google_compute_firewall.managed_allow_http_from_proxy.target_tags,
+    google_compute_firewall.managed_allow_health_checks.target_tags,
+    google_compute_firewall.managed_allow_internal_icmp.target_tags
   )
 
   disk {
@@ -44,8 +44,8 @@ resource "google_compute_instance_template" "wakapi_template" {
   }
 
   network_interface {
-    network    = google_compute_network.wakapi_net.id
-    subnetwork = google_compute_subnetwork.subnet_instances.id
+    network    = google_compute_network.wakapi_managed_net.id
+    subnetwork = google_compute_subnetwork.managed_instances.id
     access_config {
     }
   }
@@ -67,7 +67,7 @@ resource "google_compute_instance_template" "wakapi_template" {
     WAKAPI_DB_PORT       = var.WAKAPI_DB_PORT
     WAKAPI_DB_PASSWORD   = random_password.WAKAPI_DB_PASSWORD.result
     WAKAPI_PASSWORD_SALT = random_password.WAKAPI_PASSWORD_SALT.result
-    WAKAPI_DB_HOST       = google_sql_database_instance.wakapi_db.ip_address.0.ip_address
+    WAKAPI_DB_HOST       = google_compute_address.managed_db.address
   }
 }
 
@@ -77,13 +77,37 @@ resource "google_compute_instance_from_template" "wakapi_unmanaged" {
   name                     = "wakapi-unmanaged"
   source_instance_template = google_compute_instance_template.wakapi_template.self_link_unique
 
+  tags = setunion(
+    google_compute_firewall.unmanaged_allow_internet_ssh.target_tags,
+    google_compute_firewall.unmanaged_allow_http_from_proxy.target_tags,
+    google_compute_firewall.unmanaged_allow_health_checks.target_tags,
+    google_compute_firewall.unmanaged_allow_internal_icmp.target_tags
+  )
+
   network_interface {
-    network    = google_compute_network.wakapi_net.id
-    subnetwork = google_compute_subnetwork.subnet_instances.id
+    network    = google_compute_network.wakapi_unmanaged_net.id
+    subnetwork = google_compute_subnetwork.unmanaged_instances.id
     network_ip = google_compute_address.wakapi_unmanaged_ip.address
     access_config {
     }
   }
+
+  metadata = {
+    startup-script-url   = "${google_storage_bucket.scripts.url}/${google_storage_bucket_object.startup_wakapi.name}"
+    WAKAPI_DB_TYPE       = var.WAKAPI_DB_TYPE
+    WAKAPI_DB_NAME       = var.WAKAPI_DB_NAME
+    WAKAPI_DB_USER       = var.WAKAPI_DB_USER
+    WAKAPI_DB_PORT       = var.WAKAPI_DB_PORT
+    WAKAPI_DB_PASSWORD   = random_password.WAKAPI_DB_PASSWORD.result
+    WAKAPI_PASSWORD_SALT = random_password.WAKAPI_PASSWORD_SALT.result
+    WAKAPI_DB_HOST       = google_compute_address.unmanaged_db.address
+  }
+
+  lifecycle {
+    replace_triggered_by = [google_compute_instance_template.wakapi_template]
+  }
+
+  depends_on = [google_compute_instance_template.wakapi_template]
 }
 
 resource "google_compute_instance_group" "wakapi_unmanaged" {
@@ -97,6 +121,12 @@ resource "google_compute_instance_group" "wakapi_unmanaged" {
     name = "http"
     port = "80"
   }
+
+  lifecycle {
+    replace_triggered_by = [google_compute_instance_template.wakapi_template]
+  }
+
+  depends_on = [google_compute_instance_template.wakapi_template]
 }
 
 # managed instance groups
@@ -114,6 +144,8 @@ resource "google_compute_region_autoscaler" "wakapi_autoscaler" {
       target = 0.95
     }
   }
+
+  depends_on = [google_compute_region_instance_group_manager.wakapi_mig]
 }
 
 resource "google_compute_region_instance_group_manager" "wakapi_mig" {
@@ -126,6 +158,10 @@ resource "google_compute_region_instance_group_manager" "wakapi_mig" {
 
   # target_pools       = [google_compute_target_pool.wakapi_pool.id]
   base_instance_name = "wakapi-mig"
+
+  lifecycle {
+    replace_triggered_by = [google_compute_instance_template.wakapi_template]
+  }
 
   depends_on = [google_compute_instance_template.wakapi_template]
 
